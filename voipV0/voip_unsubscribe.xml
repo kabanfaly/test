@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='voip-unsubscribe'  topologyBuilder='LinearDRPCTopologyBuilder'>
+ <nodes>
+   <node name='json2map' order='0' parallelism='1' factory='mxpush.bolts.factories.Json2MapBoltFactory'>
+      <properties>
+          <property name='key' value='src'>
+          </property>
+          <property name='translator'>
+              <contents>
+                  <element value='src'></element>
+                  <element value='dst'></element>
+                  <element value='sid'></element>
+              </contents>
+          </property>
+      </properties>
+   </node>
+   <!-- TODO add get subscription state to avoid tombstones -->
+   <node name='deleteBolt' order='1' parallelism='1' factory='mxpush.bolts.factories.SharedCassandraAccessBoltFactory'>
+      <properties>
+          <property name='idx' value='1'></property>
+          <property name='idxErr' value='1'></property>
+          <property name='keyspace' value='push_intern'></property>
+          <property name='table' value='shared_subs'></property>
+          <property name='requestconfig'>
+            <contents>
+                <element name='mode' value='delete'></element>
+                 <element name='requestparams' value=''>
+                  <contents>
+                      <element name='src' value='string'></element>
+                      <element name='dst' value='string'></element>
+                      <element name='sid' value='string'></element>
+                  </contents>
+                 </element>
+            </contents>
+          </property>
+      </properties>
+   </node>
+   <!-- TODO add the setPns with value to FALSE -->
+   <node name='todrpc' order='2' parallelism='1' factory='mxpush.bolts.factories.ToDrpcResultBoltFactory'>
+      <properties>
+          <property name='idx' value='3'>
+          </property>
+          <property name='idxErr'  value='1'>
+          </property>
+      </properties>
+   </node>
+ </nodes>
+ <streams>
+   <stream node='json2map'>
+     <fields>id args src</fields>
+   </stream>
+   <stream node='deleteBolt'>
+     <fields>id args src result</fields>
+   </stream>
+ </streams>
+ <connections>
+   <node name='deleteBolt' order='1'>
+      <groupings><grouping name='fieldsGrouping'>
+      <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='todrpc' order='2'>
+      <groupings><grouping name='shuffleGrouping'></grouping></groupings>
+   </node>
+ </connections>
+</topology>
+</topologies>
