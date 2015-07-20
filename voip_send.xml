@@ -1,0 +1,158 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='voip-send' topologyBuilder='TopologyBuilder'>
+ <nodes>
+ 	<!-- queue reader -->
+   <node name='notif-reader' order='0' parallelism='1' factory='mxpush.specifics.familyplace.VOIPSpoutFactory'>
+      <properties>
+          <property name='transform' value='voip'/>
+          
+          <property name='host' value='ws-notif.intern.notif.s0.p.fti.net'/>
+          <property name='exchange' value='xchg-voip'/>
+          <property name='routing_key' value='voip_queue'/>
+          <property name='queue_name' value='voip_queue'/>
+          <property name='durable' value='true'/>
+          <property name='user' value='guest'/>
+          <property name='password' value='guest'/>
+
+          <!--property name='key' value='src'/-->
+
+          <!--property name='host' value=''/>
+          <property name='port' value=''/>
+          
+          <property name='vhost' value=''/>
+          <property name='user' value=''/>
+          <property name='password' value=''/-->
+          
+          <!--property name='exchange' value='xchg-voip-test'/>
+          <property name='routing_key' value=''/>
+          <property name='queue_name' value='queue-voip-test'/>
+          
+          <property name='queue_connection' value=''/-->
+          
+          <!--property name='durable' value=''/>
+          <property name='exclusive' value=''/>
+          <property name='autodelete' value=''/-->
+          
+          <!--property name='requeue' value=''/>
+          <property name='error-stream' value=''/>
+          <property name='autoack' value=''/-->
+      </properties>
+   </node>
+   
+   <!-- Retrieve notification subscribers -->
+   <node name='notif-subscribers' order='1' parallelism='1' factory='mxpush.bolts.factories.AstyanaxFixedPreparedStatementFactory'>
+      <properties>
+          <property name='idx' value='0'/>
+          <property name='idxerr' value='0'/>
+          <property name='indrpc' value='false'/>
+
+          <property name='statement' value='SELECT state, rules, status, version, ts, subs, last, expiry FROM shared_subs WHERE src=? AND dst=? AND sid=?'/>
+          <property name='arguments' value='src,src,sid'/>
+          <property name='required' value='src,sid'/>
+      </properties>
+   </node>
+
+		<!-- Transcode ise to send to AMY -->
+   <node name='notif-transcode' order='2' parallelism='1' factory='mxpush.bolts.factories.TranscoderBoltFactory'>
+      <properties>
+          <property name='idx' value='0'/>
+          <property name='idxerr' value='0'/>
+          <property name='indrpc' value='false'/>
+          
+          <property name='argsKey' value='notification'/>
+          <property name='key' value='dst'/>
+          <property name='mappings' value='AMY:ID-FPL'/>
+          <!--property name='sid' value='sid'/-->
+      </properties>
+   </node>
+
+	<!-- Dispatch notification to AMY -->
+   <node name='notif-dispatcher' order='3' parallelism='1' factory='mxpush.specifics.familyplace.AmyRequestFactory'>
+      <properties>
+          <property name='idx' value='0'/>
+          <property name='idxerr' value='0'/>
+          <property name='indrpc' value='false'/>
+
+          <property name='url' value='http://amy.stub.intern.notif.s0.p.fti.net/amy/200'/>
+      </properties>
+   </node>
+
+	<!-- Delete subscriber when AMY returns a 404 (or a 410) -->
+   <node name='delete-subscriber' order='4' parallelism='1' factory='mxpush.bolts.factories.AstyanaxFixedPreparedStatementFactory'>
+      <properties>
+          <property name='idx' value='0'/>
+          <property name='idxerr' value='0'/>
+          <property name='indrpc' value='false'/>
+
+          <property name='statement' value='DELETE FROM shared_subs WHERE src=? AND dst=? AND sid=?'/>
+          <property name='arguments' value='src,src,sid'/>
+          <property name='required' value='src'/>
+      </properties>
+   </node>
+
+	<!-- Update Subscription state -->
+   <node name='notif-subscribers-update' order='5' parallelism='1' factory='mxpush.bolts.factories.AstyanaxPreparedUpdateStatementFactory'>
+      <properties>
+          <property name='idx' value='0'/>
+          <property name='idxerr' value='0'/>
+          <property name='indrpc' value='false'/>
+          
+          <property name='pattern' value='UPDATE shared_subs SET $fields$ WHERE src=? AND dst=? AND sid=?'/>
+          <property name='arguments' value='src,dst,sid'/>
+          <property name='required' value='src,dst,sid'/>
+          <property name='mappings' value='state:state;rules:rules'/>
+					<!--property name='return' value='1'/-->
+      </properties>
+   </node>
+
+  </nodes>
+  
+  <streams>
+    <stream node='notif-subscribers'>
+     <fields>notification src subscribers</fields>
+   </stream>
+   <stream node='notif-transcode'>
+     <fields>notification src subscribers</fields>
+   </stream>
+   <stream node='notif-dispatcher'>
+     <fields>notification src subscribers</fields>
+   </stream>
+   <stream node='delete-subscriber'>
+     <fields>notification src subscribers</fields>
+   </stream>
+   <stream node='notif-subscribers-update'>
+     <fields>notification src subscribers</fields>
+   </stream>
+ </streams>
+ 
+ <connections>
+   <node name='notif-subscribers' order='1'>
+      <groupings>
+        <grouping name='fieldsGrouping'><componentID>notif-reader</componentID><fields>src</fields></grouping>
+    </groupings>
+   </node>
+   <node name='notif-transcode' order='2'>
+      <groupings>
+      	<grouping name='fieldsGrouping'><componentID>notif-subscribers</componentID><fields>src</fields></grouping>
+      </groupings>
+   </node>
+   <node name='notif-dispatcher' order='3'>
+      <groupings>
+      	<grouping name='fieldsGrouping'><componentID>notif-transcode</componentID><fields>src</fields></grouping>
+      </groupings>
+   </node>
+   <node name='delete-subscriber' order='4'>
+      <groupings>
+      	<grouping name='fieldsGrouping'><componentID>notif-dispatcher</componentID><fields>src</fields></grouping>
+      </groupings>
+   </node>
+   <node name='notif-subscribers-update' order='5'>
+      <groupings>
+      	<grouping name='fieldsGrouping'><componentID>notif-subscribers</componentID><fields>src</fields></grouping>
+      </groupings>
+   </node>
+ </connections>
+</topology>
+</topologies>
+

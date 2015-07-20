@@ -1,0 +1,253 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='notification'  topologyBuilder='TopologyBuilder'>
+ <mode> local </mode>
+ <nodes>
+   <node name='notif-reader' order='0' parallelism='1' factory='mxpush.spouts.factories.AMQPSpoutFactory'>
+      <!-- Note for the possible AMQP parameter to pass
+      <properties>
+          <property name='queue_host' value=''>
+          </property>
+          <property name='queue_port' value=''>
+          </property>
+          <property name='queue_connection' value=''>
+          </property>
+          
+          <property name='user' value=''>
+          </property>
+          <property name='password' value=''>
+          </property>
+          
+          <property name='vhost' value=''>
+          </property>
+          <property name='name' value=''>
+          </property>
+          <property name='exchange' value=''>
+          </property>
+          <property name='routing_key' value=''>
+          </property>
+          
+          <property name='durable' value=''>
+          </property>
+          <property name='exclusive' value=''>
+          </property>
+          <property name='autodelete' value=''>
+          </property>
+          
+          <property name='requeue' value=''>
+          </property>
+          <property name='error-stream' value=''>
+          </property>
+          <property name='autoack' value=''>
+          </property>
+      </properties>
+      -->
+   </node>
+   <node name='notif-subscribers' order='1' parallelism='1' factory='mxpush.bolts.factories.NotificationSubscribersBoltFactory'>
+      <properties>
+          <property name='idx' value='0'>
+          </property>
+          <property name='inDrpc' value='0'>
+          </property>
+      </properties>
+   </node>
+   <node name='notif-subscribers-merge' order='2' parallelism='1' factory='mxpush.bolts.factories.SubscriptionStateUpdaterFactory'>
+   </node>
+   <node name='notif-subscribers-update' order='3' parallelism='1' factory='mxpush.bolts.factories.SubscriptionBoltFactory'>
+      <properties>
+          <property name='inDrpc' value='false'>
+          </property>
+          <property name='idx' value='2'>
+          </property>
+          <property name='mode' value='update'>
+          </property>
+      </properties>
+   </node>
+   <node name='notif-details' order='4' parallelism='1' factory='mxpush.bolts.factories.PnsGetDetailsBoltFactory'>
+      <properties>
+          <property name='inDrpc' value='false'>
+          </property>
+          <property name='idx' value='2'>
+          </property>
+      </properties>
+   </node>
+   <node name='notif-dispatcher' order='5' parallelism='1' factory='mxpush.bolts.factories.NotificationDispatcherFactory'>
+      <properties>
+          <property name='idx' value='2'>
+          </property>
+          <!--
+          <property name='mappings' value='OMAIS:APNS,OMAAS:GCM,OOPro:OOPRO'>
+          </property>
+           -->
+      </properties>
+   </node>
+   <node name='notif-wns-dispatcher' order='6' parallelism='1' factory='mxpush.bolts.factories.WindowsDispatcherFactory'>
+      <properties>
+          <property name='idx' value='2'>
+          </property>
+      </properties>
+   </node>
+   <node name='notif-apns-dispatcher' order='7' parallelism='1' factory='mxpush.bolts.factories.AppleDispatcherFactory'>
+      <properties>
+          <property name='idx' value='2'>
+          </property>
+      </properties>
+   </node>
+   <node name='notif-gcm-dispatcher' order='8' parallelism='1' factory='mxpush.bolts.factories.AndroidDispatcherFactory'>
+      <properties>
+          <property name='mode' value='standard'>
+          </property>
+          <property name='key' value='123'>
+          </property>
+      </properties>
+   </node>
+   <node name='notif-pro-dispatcher' order='9' parallelism='1' factory='mxpush.bolts.factories.OoProBoltFactory'>
+      <properties>
+          <property name='idx' value='2'>
+          </property>
+      </properties>
+   </node>
+   <node name='notif-gcm-change-id' order='10' parallelism='1' factory='mxpush.bolts.factories.SubscriptionBoltFactory'>
+      <properties>
+          <property name='idx' value='2'>
+          </property>
+          <property name='inDrpc' value='false'>
+          </property>
+          <property name='mode' value='subscription'>
+          </property>
+      </properties>
+   </node>
+   <node name='notif-unsubscribe' order='11' parallelism='1' factory='mxpush.bolts.factories.UnsubscriptionBoltCQLFactory'>
+      <properties>
+          <property name='inDrpc' value='false'>
+          </property>
+      </properties>
+   </node>
+  </nodes>
+  <streams>
+    <stream node='notif-subscribers'>
+     <fields>notification src subscribers</fields>
+   </stream>
+   <stream node='notif-subscribers-merge'>
+     <fields>notification src subscribers</fields>
+   </stream>
+   <stream node='notif-subscribers-update'>
+     <fields>notification src subscribers</fields>
+   </stream>
+   <stream node='notif-details'>
+     <fields>notification src subscribers extra</fields>
+   </stream>
+   <stream node='notif-dispatcher'>
+     <fields>notification src subscribers extra</fields>
+   </stream>
+   <stream node='notif-wns-dispatcher'>
+     <fields>src args</fields>
+   </stream>
+   <stream node='notif-apns-dispatcher'>
+     <fields>src args</fields>
+   </stream>
+   <stream node='notif-gcm-dispatcher'>
+     <fields>UNSUB:src,unsub;CHANGEID:src,unsub,sub</fields>
+       <!-- <field>UNSUB:src,unsub;CHANGEID:src,unsub,sub</field>
+     </fields> -->
+   </stream>
+   <stream node='notif-pro-dispatcher'>
+     <fields>src args</fields>
+   </stream>
+   <stream node='notif-gcm-change-id'>
+     <fields>src args</fields>
+   </stream>
+   <stream node='notif-unsubscribe'>
+     <fields>src args result</fields>
+   </stream>
+ </streams>
+ <connections>
+   <node name='notif-subscribers' order='1'>
+      <groupings><grouping name='fieldsGrouping'>
+         <componentID> notif-reader </componentID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-subscribers-merge' order='2'>
+      <groupings><grouping name='fieldsGrouping'>
+         <componentID> notif-subscribers </componentID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-subscribers-update' order='3'>
+      <groupings><grouping name='fieldsGrouping'>
+         <componentID> notif-subscribers-merge </componentID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-details' order='4'>
+      <groupings><grouping name='fieldsGrouping'>
+         <componentID> notif-subscribers-merge </componentID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-dispatcher' order='5'>
+      <groupings><grouping name='fieldsGrouping'>
+         <componentID> notif-details </componentID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-wns-dispatcher' order='6'>
+      <groupings><grouping name='fieldsGrouping'>
+        <componentID> notif-dispatcher </componentID>
+        <streamID> WNS </streamID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-apns-dispatcher' order='7'>
+      <groupings><grouping name='fieldsGrouping'>
+        <componentID> notif-dispatcher </componentID>
+        <streamID> APNS </streamID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-gcm-dispatcher' order='8'>
+      <groupings><grouping name='fieldsGrouping'>
+        <componentID> notif-dispatcher </componentID>
+        <streamID> GCM </streamID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-pro-dispatcher' order='9'>
+      <groupings><grouping name='fieldsGrouping'>
+        <componentID> notif-dispatcher </componentID>
+        <streamID> OOPRO </streamID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-gcm-change-id' order='10'>
+      <groupings><grouping name='fieldsGrouping'>
+        <componentID> notif-gcm-dispatcher </componentID>
+        <streamID> CHANGEID </streamID> 
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='notif-unsubscribe' order='11'>
+      <groupings>
+	      <grouping name='fieldsGrouping'>
+	        <componentID> notif-wns-dispatcher </componentID>
+	        <fields>src</fields>
+	      </grouping>
+	      <grouping name='fieldsGrouping'>
+            <componentID> notif-pro-dispatcher </componentID>
+            <fields>src</fields>
+          </grouping>
+          <!-- <grouping name='fieldsGrouping'>
+            <componentID> notif-gcm-change-id </componentID>
+            <fields>src</fields>
+          </grouping> -->
+          <!-- <grouping name='fieldsGrouping'>
+            <componentID> notif-gcm-dispatcher </componentID>
+            <streamID> UNSUB </streamID>
+            <fields>src</fields>
+          </grouping>-->
+      </groupings>
+   </node>
+ </connections>
+</topology>
+</topologies>

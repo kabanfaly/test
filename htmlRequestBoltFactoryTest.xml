@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='test_http_bolt'  topologyBuilder='LinearDRPCTopologyBuilder'>
+ <nodes>
+  <node name='getPns' order='1' parallelism='1' factory='mxpush.bolts.factories.HttpRequestBoltFactory'>
+      <properties>
+          <property name='idx'  value='1'></property>
+          <property name='host'  value='http://localhost'></property>
+          <property name='path'  value='/spp/main'></property>
+          <property name='method'  value='GET'></property>
+          <property name='ispnscall'  value='false'></property>
+          <property name='fixedparams'>
+              <contents>
+	              <element name='REQUEST' value='getPNS'></element>
+	              <element name='VERSION' value='1.0.0'></element>
+	              <element name='FORMAT' value='xml'></element>
+	              <element name='SID' value='ID-AMY'></element>
+	              <element name='COUNTRY' value='FR'></element>
+	              <element name='INFOS' value='VoipNoUnsubP'></element>
+              </contents>
+          </property>
+          <property name='varparams' >
+            <contents>
+              <element name='src' value='src'></element>
+            </contents>
+          </property>
+      </properties>
+   </node>
+   <node name='setPns' order='2' parallelism='1' factory='mxpush.bolts.factories.HttpRequestBoltFactory'>
+      <properties>
+          <property name='idx'  value='1'></property>
+          <property name='host'  value='http://localhost'></property>
+          <property name='path'  value='/spp/main'></property>
+          <property name='method'  value='GET'></property>
+          <property name='ispnscall'  value='false'></property>
+          <property name='fixedparams'  >
+              <contents>
+	              <element name='REQUEST' value='setPNS'></element>
+	              <element name='VERSION' value='1.0.0'></element>
+	              <element name='FORMAT' value='xml'></element>
+	              <element name='SID' value='ID-AMY'></element>
+	              <element name='COUNTRY' value='FR'></element>
+	              <element name='INFOS' value='VoipNoUnsubP'></element>
+              </contents>
+          </property>
+          <property name='varparams' >
+              <contents>
+	            <element name='src' value='src'></element>
+	          </contents>
+          </property>
+      </properties>
+   </node>
+ </nodes>
+</topology>
+</topologies>

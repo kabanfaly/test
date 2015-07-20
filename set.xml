@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='set'  topologyBuilder='LinearDRPCTopologyBuilder'>
+ <mode> local </mode>
+ <nodes>
+   <node name='json2map' order='0' parallelism='1' factory='mxpush.bolts.factories.Json2MapBoltSetTopoFactory'>
+      <properties>
+          <property name='key' value='src'>
+          </property>
+          <property name='translator'>
+              <contents>
+                  <element value='src'></element>
+                  <element value='dst'></element>
+                  <element value='service'></element>
+                  <element value='type'></element>
+              </contents>
+          </property>
+      </properties>
+   </node>
+   <node name='getSubsState' order='1' parallelism='1' factory='mxpush.bolts.factories.GetSubscriptionStateBoltFactory'>
+   </node>
+   <node name='transformTuple' order='2' parallelism='1' factory='mxpush.bolts.factories.TransformTupleBoltFactory'>
+      <properties>
+          <property name='idxErr' value='1'>
+          </property>
+          <property name='function' value='SubscriptionStateMerger'>
+          </property>
+      </properties>
+   </node>
+   <node name='setSubsState' order='3' parallelism='1' factory='mxpush.bolts.factories.SubscriptionBoltFactory'>
+      <properties>
+          <property name='idxErr' value='1'>
+          </property>
+          <property name='mode' value='update'>
+          </property>
+      </properties>
+   </node>
+   <node name='todrpc' order='4' parallelism='1' factory='mxpush.bolts.factories.ToDrpcResultBoltFactory'>
+      <properties>
+          <property name='idx' value='4'>
+          </property>
+          <property name='idxErr' value='1'>
+          </property>
+      </properties>
+   </node>
+ </nodes>
+ <streams>
+   <stream node='json2map'>
+     <fields>id args src</fields>
+   </stream>
+   <stream node='getSubsState'>
+     <fields>id args src state</fields>
+   </stream>
+   <stream node='transformTuple'>
+     <fields>id args src state</fields>
+   </stream>
+   <stream node='setSubsState'>
+     <fields>id args src state result</fields>
+   </stream>
+ </streams>
+ <connections>
+   <node name='getSubsState' order='1'>
+      <groupings><grouping name='fieldsGrouping'>
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='transformTuple' order='2'>
+      <groupings><grouping name='fieldsGrouping'>
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='setSubsState' order='3'>
+      <groupings><grouping name='fieldsGrouping'>
+        <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='todrpc' order='4'>
+      <groupings><grouping name='shuffleGrouping'></grouping></groupings>
+   </node>
+ </connections>
+</topology>
+</topologies>

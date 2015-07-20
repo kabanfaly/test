@@ -1,0 +1,117 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='test_cassandra_bolt'  topologyBuilder='LinearDRPCTopologyBuilder'>
+ <nodes>
+   <node name='insert_bolt' order='1' parallelism='1' factory='mxpush.bolts.factories.SharedCassandraAccessBoltFactory'>
+      <properties>
+          <property name='idx' value='3'></property>
+          <property name='idxErr' value='1'></property>
+          <property name='keyspace' value='push_dev'></property>
+          <property name='table' value='shared_subs'></property>
+          <property name='requestconfig'>
+            <contents>
+                <element name='mode' value='insert'></element>
+                 <element name='requestparams'>
+                  <contents>
+	                  <element name='src' value='string'></element>
+	                  <element name='dst' value='string'></element>
+	                  <element name='sid' value='string'></element>
+	                  <element name='version' value='string'></element>
+	                  <element name='voip_nextuid' value='integer'></element>
+	                  <element name='voip_unseenvoicemsg' value='integer'></element>
+	                  <element name='voip_nbvoicemsg' value='integer'></element>
+	                  <element name='voip_unseenmissedcall' value='integer'></element>
+	                  <element name='voip_nbmissedcall' value='integer'></element>
+	                  <element name='subs' value='timestamp'></element>
+	                  <!-- <element name='last' value='timestamp'></element>-->
+  	              </contents>
+                 </element>
+            </contents>
+          </property>
+      </properties>
+   </node>
+   <node name='select_bolt' order='2' parallelism='1' factory='mxpush.bolts.factories.SharedCassandraAccessBoltFactory'>
+      <properties>
+          <property name='idx' value='3'></property>
+          <property name='idxErr' value='1'></property>
+          <property name='keyspace' value='push_dev'></property>
+          <property name='table' value='shared_subs'></property>
+          <property name='requestconfig'>
+            <contents>
+                <element name='mode' value='select'></element>
+                 <element name='requestparams'>
+                  <contents>
+                      <element name='src' value='string'></element>
+                      <element name='dst' value='string'></element>
+                      <element name='sid' value='string'></element>
+                      <element name='voip_nextuid' value='integer'></element>
+                      <element name='voip_unseenvoicemsg' value='integer'></element>
+                      <element name='voip_nbvoicemsg' value='integer'></element>
+                      <element name='voip_unseenmissedcall' value='integer'></element>
+                      <element name='voip_nbmissedcall' value='integer'></element>
+                  </contents>
+                 </element>
+                 <element name='requestconditions' value=''>
+                  <contents>
+                      <element name='src' value='string'></element>
+                      <element name='dst' value='string'></element>
+                      <element name='sid' value='string'></element>
+                  </contents>
+                 </element>
+            </contents>
+          </property>
+      </properties>
+   </node>
+   <node name='update_bolt' order='3' parallelism='1' factory='mxpush.bolts.factories.SharedCassandraAccessBoltFactory'>
+      <properties>
+          <property name='idx' value='3'></property>
+          <property name='idxErr' value='1'></property>
+          <property name='keyspace' value='push_dev'></property>
+          <property name='table' value='shared_subs'></property>
+          <property name='requestconfig'>
+            <contents>
+                <element name='mode' value='update'></element>
+                 <element name='requestparams'>
+                  <contents>
+                      <element name='voip_nextuid' value='integer'></element>
+                      <element name='voip_unseenvoicemsg' value='integer'></element>
+                      <element name='voip_nbvoicemsg' value='integer'></element>
+                      <element name='voip_unseenmissedcall' value='integer'></element>
+                      <element name='voip_nbmissedcall' value='integer'></element>
+                      <element name='last' value='timestamp'></element>
+                  </contents>
+                 </element>
+                 <element name='requestconditions' value=''>
+                  <contents>
+                      <element name='src' value='string'></element>
+                      <element name='dst' value='string'></element>
+                      <element name='sid' value='string'></element>
+                  </contents>
+                 </element>
+            </contents>
+          </property>
+      </properties>
+   </node>
+   <node name='delete_bolt' order='3' parallelism='1' factory='mxpush.bolts.factories.SharedCassandraAccessBoltFactory'>
+      <properties>
+          <property name='idx' value='3'></property>
+          <property name='idxErr' value='1'></property>
+          <property name='keyspace' value='push_dev'></property>
+          <property name='table' value='shared_subs'></property>
+          <property name='requestconfig'>
+            <contents>
+                <element name='mode' value='delete'></element>
+                 <element name='requestparams' value=''>
+                  <contents>
+                      <element name='src' value='string'></element>
+                      <element name='dst' value='string'></element>
+                      <element name='sid' value='string'></element>
+                  </contents>
+                 </element>
+            </contents>
+          </property>
+      </properties>
+   </node>
+ </nodes>
+</topology>
+</topologies>

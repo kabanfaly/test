@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='srcs'  topologyBuilder='LinearDRPCTopologyBuilder'>
+ <mode> local </mode>
+ <nodes>
+   <node name='json2map' order='0' parallelism='1' factory='mxpush.bolts.factories.Json2MapBoltFactory'>
+      <properties>
+          <property name='key' value='dst'>
+          </property>
+          <property name='translator'>
+              <contents>
+                  <element value='dst'></element>
+                  <element value='service'></element>
+                  <element value='type'></element>
+              </contents>
+          </property>
+      </properties>
+   </node>
+   <node name='getListBolt' order='1' parallelism='1' factory='mxpush.bolts.factories.GetListFactory'>
+      <properties>
+          <property name='idx' value='3'>
+          </property>
+          <property name='key' value='dst'>
+          </property>
+      </properties>
+   </node>
+   <node name='transcodeBolt' order='2' parallelism='1' factory='mxpush.bolts.factories.TranscoderBoltFactory'>
+      <properties>
+          <property name='idx' value='3'>
+          </property>
+      </properties>
+   </node>
+   <node name='todrpc' order='3' parallelism='1' factory='mxpush.bolts.factories.ToDrpcResultBoltFactory'>
+      <properties>
+          <property name='idx' value='3'>
+          </property>
+          <property name='idxErr' value='1'>
+          </property>
+          <property name='translator'></property>
+      </properties>
+   </node>
+ </nodes>
+ <streams>
+   <stream node='json2map'>
+     <fields>id args dst</fields>
+   </stream>
+   <stream node='getListBolt'>
+     <fields>id args dst result</fields>
+     
+   </stream>
+   <stream node='transcodeBolt'>
+     <fields>id args dst result</fields>
+   </stream>
+ </streams>
+ <connections>
+   <node name='getListBolt' order='1'>
+      <groupings><grouping name='fieldsGrouping'>
+        <fields>dst</fields>
+      </grouping></groupings>
+   </node>
+   <node name='transcodeBolt' order='2'>
+      <groupings><grouping name='fieldsGrouping'>
+        <fields>dst</fields>
+      </grouping></groupings>
+   </node>
+   <node name='todrpc' order='3'>
+      <groupings><grouping name='shuffleGrouping'></grouping></groupings>
+   </node>
+ </connections>
+</topology>
+</topologies>

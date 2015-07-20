@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='feedback'  topologyBuilder='TopologyBuilder'>
+ <mode> local </mode>
+ <nodes>
+   <node name='tick-spout' order='0' parallelism='1' factory='mxpush.spouts.factories.TickSpoutFactory'>
+      <properties>
+          <property name='delay' value='3500'>
+          </property>
+      </properties>
+   </node>
+  <!-- <node name='feedback-getter' order='1' parallelism='1' factory='mxpush.bolts.factories.'>
+     <properties>
+         <property name='certifPath' value='none'></property>
+         <property name='secret'  value='none'></property>
+         <property name='production'  value='none'></property>
+         <property name='policy'  value='none'></property>
+         <property name='errorPolicy'  value='none'></property>
+     </properties>
+  </node> -->
+</nodes>
+<streams>
+  <stream node='tick-spout'>
+    <fields>tick</fields>
+  </stream>
+  <!--  <stream node='feedback-getter'>
+    <fields>tokens</fields>
+  </stream>-->
+</streams>
+<connections>
+  <!-- <node name='feedback-getter' order='1'>
+     <groupings><grouping name='shuffleGrouping'>
+        <componentID>tick-spout</componentID>
+     </grouping>
+  </node>-->
+ </connections>
+</topology>
+</topologies>

@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='voip-unsubscribe' topologyBuilder='LinearDRPCTopologyBuilder'>
+ <nodes>
+   <node name='json2map' order='0' parallelism='1' factory='mxpush.bolts.factories.Json2MapBoltFactory'>
+      <properties>
+          <property name='key' value='src'/>
+          <property name='translator'>
+              <contents>
+                  <element value='src'/>
+                  <element value='dst'/>
+                  <element value='sid'/>
+              </contents>
+          </property>
+      </properties>
+   </node>
+
+   <!-- TODO add get subscription state to avoid tombstones -->
+   <node name='deleteBolt' order='1' parallelism='1' factory='mxpush.bolts.factories.AstyanaxFixedPreparedStatementFactory'>
+      <properties>
+          <property name='idx' value='1'/>
+          <property name='idxErr' value='1'/>
+          <property name='statement' value='DELETE FROM shared_subs WHERE src=? AND dst=? AND sid=?'/>
+          <property name='arguments' value='src,dst,sid'/>
+          <!--property name='statement' value='BEGIN BATCH&#10;DELETE FROM shared_subs WHERE src=? AND dst=? AND sid=?;&#10;DELETE FROM shared_revsubs WHERE src=? AND dst=? AND sid=?&#10;APPLY BATCH'/>
+          <property name='arguments' value='src,dst,sid,src,dst,sid'/-->
+          <property name='required' value='src,dst,sid'/>
+          <property name='return' value='1'/>
+      </properties>
+   </node>
+
+   <!-- TODO add the setPns with value to FALSE -->
+   <node name='todrpc' order='2' parallelism='1' factory='mxpush.bolts.factories.ToDrpcResultBoltFactory'>
+      <properties>
+          <property name='idx' value='1'/>
+          <property name='idxErr'  value='1'/>
+      </properties>
+   </node>
+ </nodes>
+ 
+ <streams>
+   <stream node='json2map'>
+     <fields>id args src</fields>
+   </stream>
+   <stream node='deleteBolt'>
+     <fields>id args src</fields>
+   </stream>
+ </streams>
+
+ <connections>
+   <node name='deleteBolt' order='1'>
+      <groupings><grouping name='fieldsGrouping'>
+      <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='todrpc' order='2'>
+      <groupings><grouping name='shuffleGrouping' /></groupings>
+   </node>
+ </connections>
+</topology>
+</topologies>
+

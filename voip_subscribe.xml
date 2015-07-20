@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='voip-subscribe' topologyBuilder='LinearDRPCTopologyBuilder'>
+	<nodes>
+		<node name='json2map' order='0' parallelism='1' factory='mxpush.bolts.factories.Json2MapBoltSetTopoFactory'>
+			<properties>
+				<property name='key' value='src'/>
+				<property name='translator'>
+					<contents>
+						<element value='src'/>
+						<element value='dst'/>
+						<element value='sid'/>
+					</contents>
+				</property>
+			</properties>
+		</node>
+
+		<!-- retrieve VOIP data from PNS -->
+		<node name='getPns' order='1' parallelism='1' factory='mxpush.specifics.familyplace.GetPNSVoipFactory'>
+			<properties>
+				<property name='idx' value='1'/>
+				<property name='idxErr' value='1'/>
+				
+				<property name='pattern' value='http://pns.stub.intern.notif.s0.p.fti.net/spp/main?credential=11,{cred}&amp;infos=UnseenFaxMsg,NbFaxMsg,UnseenVoiceMsg,NbVoiceMsg,UnseenMissedCall,NbMissedCall,UMNextUID,UMTimestamp&amp;request=getPNS&amp;sid=MXPUSH&amp;version=1.0.0&amp;format=xml'/>
+				<property name='returnnull' value='true'/>
+				<!--property name='key' value='src'/-->
+				<property name='outkey' value='state'/>
+			</properties>
+		</node>
+
+		<!-- set voip unsub flag in PNS to avoid PBI unsub -->
+		<node name='setPns' order='2' parallelism='1' factory='mxpush.bolts.factories.GetPNSFactory'>
+			<properties>
+				<property name='idx' value='1'/>
+				<property name='idxErr' value='1'/>
+
+				<property name='pattern' value='http://pns.stub.intern.notif.s0.p.fti.net/spp/main?credential=11,{cred}&amp;datas=VoipNoUnsubP%3Dtrue&amp;request=setPNS&amp;sid=MXPUSH&amp;version=1.0.0&amp;format=xml'/>
+				<property name='returnnull' value='true'/>
+			</properties>
+		</node>
+
+		<!-- subscribe to cassandra -->
+		<node name='subsBolt' order='3' parallelism='1' factory='mxpush.bolts.factories.AstyanaxPreparedInsertStatementFactory'>
+			<properties>
+				<property name='idx' value='1'/>
+				<property name='idxErr' value='1'/>
+
+				<property name='pattern' value='INSERT INTO shared_subs ($fields$, subs) VALUES ($marks$, dateof(now()));'/>
+				<property name='mappings' value='src:src,dst:dst,sid:sid,state:state,rules:rules'/>
+				<property name='required' value='src,dst,sid'/>
+				<property name='return' value='1'/>
+			</properties>
+		</node>
+
+		<node name='todrpc' order='4' parallelism='1' factory='mxpush.bolts.factories.ToDrpcResultBoltFactory'>
+			<properties>
+				<property name='idx' value='3'/>
+				<property name='idxErr'	value='1'/>
+			</properties>
+		</node>
+	</nodes>
+ 
+	<streams>
+		<stream node='json2map'>
+			<fields>id args src</fields>
+		</stream>
+		<stream node='getPns'>
+			<fields>id args src result</fields>
+		</stream>
+		<stream node='setPns'>
+			<fields>id args src result</fields>
+		</stream>
+		<stream node='subsBolt'>
+			<fields>id args src result</fields>
+		</stream>
+	</streams>
+ 
+	<connections>
+		<node name='getPns' order='1'>
+			<groupings><grouping name='fieldsGrouping'><fields>src</fields></grouping></groupings>
+		</node>
+		<node name='setPns' order='2'>
+			<groupings><grouping name='fieldsGrouping'><fields>src</fields></grouping></groupings>
+		</node>
+		<node name='subsBolt' order='3'>
+			<groupings><grouping name='fieldsGrouping'><fields>src</fields></grouping></groupings>
+		</node>
+		<node name='todrpc' order='4'>
+			<groupings><grouping name='shuffleGrouping'></grouping></groupings>
+		</node>
+	</connections>
+
+</topology>
+</topologies>
+

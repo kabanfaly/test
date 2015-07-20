@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='name-mapper-test'  topologyBuilder='LinearDRPCTopologyBuilder'>
+ <nodes>
+   <node name='name-mapper-bolt' order='4' parallelism='1' factory='mxpush.bolts.factories.MapNameMapperBoltFactory'>
+      <properties>
+          <property name='idx' value='1'></property>
+          <property name='idxErr' value='1'></property>
+          <property name='mappings'>
+            <contents>
+                 <element name='UnseenMissedCall' value='voip_unseenmissedcall'> </element>
+                 <element name='NbMissedCall' value='voip_nbmissedcall'> </element>
+                 <element name='UMNextUID' value='voip_nextuid'> </element>
+                 <element name='NbVoiceMsg' value='voip_nbvoicemsg'> </element>
+                 <element name='NbFaxMsg' value='voip_nbfaxmsg'> </element>
+                 <element name='UnseenFaxMsg' value='voip_unseenfaxmsg'> </element>
+                 <element name='UMTimestamp' value='voip_umtimestamp'> </element>
+                 <element name='UnseenVoiceMsg' value='voip_unseenvoicemsg'> </element>
+                 <element name='VOICE'   value='voice'> </element>
+                 <element name='VERSION' value='version'> </element>
+                 <element name='FORMAT'  value='format' > </element>
+                 <element name='COUNTRY' value='country'> </element>
+                 <element name='REQUEST' value='request'> </element>
+            </contents>
+          </property>
+      </properties>
+   </node>
+ </nodes>
+ <streams>
+ </streams>
+  <connections>
+ </connections>
+</topology>
+</topologies>

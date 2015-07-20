@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='voip-get' topologyBuilder='LinearDRPCTopologyBuilder'>
+ <nodes>
+   <node name='json2map' order='0' parallelism='1' factory='mxpush.bolts.factories.Json2MapBoltFactory'>
+      <properties>
+          <property name='key' value='src'/>
+          <property name='translator'>
+              <contents>
+                  <element value='src'/>
+                  <element value='dst'/>
+                  <element value='sid'/>
+              </contents>
+          </property>
+      </properties>
+   </node>
+
+   <node name='getBolt' order='1' parallelism='1' factory='mxpush.bolts.factories.AstyanaxFixedPreparedStatementFactory'>
+      <properties>
+          <property name='idx' value='1'/>
+          <property name='idxErr' value='1'/>
+          <property name='return' value='1'/>
+          <!-- cassandra part -->
+          <property name='statement' value='SELECT * FROM shared_subs WHERE src=? AND dst=? AND sid=?'/>
+          <property name='arguments' value='src,dst,sid'/>
+          <property name='required' value='src,dst,sid'/>
+      </properties>
+   </node>
+   
+   <node name='todrpc' order='3' parallelism='1' factory='mxpush.bolts.factories.ToDrpcResultBoltFactory'>
+      <properties>
+          <property name='idx' value='3'/>
+          <property name='idxErr' value='1'/>
+      </properties>
+   </node>
+   
+ </nodes>
+ 
+ <streams>
+   <stream node='json2map'>
+     <fields>id args src</fields>
+   </stream>
+   <stream node='getBolt'>
+     <fields>id args src result</fields>
+   </stream>
+ </streams>
+ 
+ <connections>
+   <node name='getBolt' order='1'>
+      <groupings><grouping name='fieldsGrouping'>
+      <fields>src</fields>
+      </grouping></groupings>
+   </node>
+   <node name='todrpc' order='2'>
+      <groupings><grouping name='shuffleGrouping'/></groupings>
+   </node>
+ </connections>
+ 
+</topology>
+</topologies>
+

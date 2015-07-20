@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='echo-json'  topologyBuilder='LinearDRPCTopologyBuilder'>
+ <mode> local </mode>
+ <nodes>
+   <node name='json2map' order='0' parallelism='1' factory='mxpush.bolts.factories.Json2MapBoltFactory'>
+   </node>
+   <node name='todrpc' order='1' parallelism='1' factory='mxpush.bolts.factories.ToDrpcResultBoltFactory' >
+      <properties>
+          <property name='idx' value='1'>
+          </property>
+          <property name='idxErr' value='1'>
+          </property>
+      </properties>
+   </node>
+ </nodes>
+ <streams>
+   <stream node='json2map'>
+     <fields> id args </fields>
+       <!-- <field>id</field>
+       <field>args</field>
+     </fields> -->
+   </stream>
+ </streams>
+ <connections>
+   <node name='todrpc' order='1'>
+      <groupings><grouping name='shuffleGrouping'></grouping></groupings>
+   </node>
+ </connections>
+</topology>
+</topologies>

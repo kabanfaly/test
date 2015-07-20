@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<topologies>
+<topology name='get'  topologyBuilder='LinearDRPCTopologyBuilder'>
+ <mode> local </mode>
+ <nodes>
+   <node name='json2map' order='0' parallelism='3' factory='mxpush.bolts.factories.Json2MapBoltFactory'>
+      <properties>
+          <property name='key' value='src'>
+          </property>
+          <property name='translator'>
+              <contents>
+                  <element value='src'></element>
+                  <element value='dst'></element>
+                  <element value='service'></element>
+                  <element value='type'></element>
+              </contents>
+          </property>
+      </properties>
+   </node>
+   <node name='getSubsState' order='1' parallelism='2' factory='mxpush.bolts.factories.GetSubscriptionStateBoltFactory'>
+   </node>
+   <node name='todrpc' order='2' parallelism='1' factory='mxpush.bolts.factories.ToDrpcResultBoltFactory'>
+      <properties>
+          <property name='idx' value='3'></property>
+          <property name='idxErr' value='1'></property>
+          <property name='translator'></property>
+      </properties>
+   </node>
+ </nodes>
+ <streams>
+   <stream node='json2map'>
+     <fields>id args src</fields>
+       <!-- <field>id</field>
+       <field>args</field>
+       <field>src</field>
+     </fields> -->
+   </stream>
+   <stream node='getSubsState'>
+     <fields>id args src result</fields>
+       <!-- <field>id</field>
+       <field>args</field>
+       <field>src</field>
+       <field>result</field> 
+     </fields> -->
+   </stream>
+ </streams>
+ <connections>
+   <node name='todrpc' order='1'>
+      <groupings><grouping name='shuffleGrouping'>
+      <fields>src</fields>
+         <!-- <field>src</field>
+      </fields> -->
+      </grouping></groupings>
+   </node>
+   <node name='getSubsState' order='2'>
+      <groupings><grouping name='shuffleGrouping'></grouping></groupings>
+   </node>
+ </connections>
+</topology>
+</topologies>
